@@ -43,23 +43,23 @@
         +getIdSale(): Integer
         +getProducts(): List<Product>
         +getTotalPrice(): Double
-        +getDate(): String
-        +getPaymentMethod(): String
+        +getDate(): LocalDate
+        +getPaymentMethod(): PaymentMethod
     }
 
     class SaleImpl {
         -idSale: Integer
         -products: List<Product>
         -totalPrice: Double
-        -date: String
+        -date: LocalDate
         -PaymentMethod: String
         +SaleImpl(products: List<Product>, totalPrice: Double, date: String, paymentMethod: String)
         +calculateTotalPrice(): Double
         +getIdSale(): Integer
         +getProducts(): List<Product>
         +getTotalPrice(): Double
-        +getDate(): String
-        +getPaymentMethod(): String
+        +getDate(): LocalDate
+        +getPaymentMethod(): PaymentMethod
     }
 
     class PeopleConnected {
