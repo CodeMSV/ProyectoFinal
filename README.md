@@ -1,207 +1,193 @@
 ```mermaid
     classDiagram
-
-    class Product {
-        <<interface>>
-        +getIdProduct(): Integer
-        +getName(): String
-        +getMeatType(): String
-        +getOrigin(): String
-        +getExpirationDate(): LocalDate
-        +getWeight(): Double
-        +getPrice(): Double
-        +getStock(): Integer
-        +updateStock(): void
-        +isExpired(): Boolean
-    }
-
-    class ProductImpl {
-        -idProduct: Integer
-        -name: String
-        -meatType: String
-        -origin: String
-        -expirationDate: String
-        -weight: Double
-        -price: Double
-        -stock: Integer
-        +ProductImpl(name: String, meatType: String, origin: String, expirationDate: String, weight: Double, price: Double, stock: Integer)
-        +getIdProduct(): Integer
-        +getName(): String
-        +getMeatType(): String
-        +getOrigin(): String
-        +getExpirationDate(): String
-        +getWeight(): Double
-        +getPrice(): Double
-        +getStock(): Integer
-        +isExpired(): Boolean
-        +updateStock(): void
-    }
-
-    class Sale {
-        <<interface>>
-        +calculateTotalPrice(): Double
-        +getIdSale(): Integer
-        +getProducts(): List<Product>
-        +getTotalPrice(): Double
-        +getDate(): LocalDate
-        +getPaymentMethod(): PaymentMethod
-    }
-
-    class SaleImpl {
-        -idSale: Integer
-        -products: List<Product>
-        -totalPrice: Double
-        -date: LocalDate
-        -PaymentMethod: String
-        +SaleImpl(products: List<Product>, totalPrice: Double, date: String, paymentMethod: String)
-        +calculateTotalPrice(): Double
-        +getIdSale(): Integer
-        +getProducts(): List<Product>
-        +getTotalPrice(): Double
-        +getDate(): LocalDate
-        +getPaymentMethod(): PaymentMethod
-    }
-
-    class PeopleConnected {
-        <<interface>>
-        +getName(): String
-        +getEmail(): String
-        +getId(): Integer
-        +getAddress(): String
-        +getPhone(): String
-        +sendMessage(): void
-        +orderStatus(): void
-        +orderHistory(): void
-    }
-
-    class PeopleConnectedImpl {
+    %% Abstract Base Class
+    class User {
         <<abstract>>
-        -id: Integer
-        -name: String
-        -email: String
-        -address: String
-        -phone: String
+        +int id
+        +String nombre
+        +String email
+        +String password
+        +int getId()
+        +String getNombre()
+        +String getEmail()
+        +String getPassword()
     }
 
-    class Client {
+    %% Interfaces
+    class IClient {
         <<interface>>
-        +requestPayment(): void
+        +Address getDireccion()
+    }
+    class IAdmin {
+        <<interface>>
+        +void manageAll()
+    }
+    class IProduct {
+        <<interface>>
+        +int getId()
+        +String getNombre()
+        +String getDescripcion()
+        +BigDecimal getPrecio()
+        +int getStock()
+        +LocalDate getFechaCaducidad()
+    }
+    class ISale {
+        <<interface>>
+        +Double calculateTotalPrice()
+        +Integer getIdSale()
+        +List~IProduct~ getProducts()
+        +Double getTotalPrice()
+        +LocalDate getDate()
+        +PaymentMethod getPaymentMethod()
+    }
+    class ISupplierOrder {
+        <<interface>>
+        +void addItem(int productId, int cantidad)
+        +List~SupplierOrderItem~ getItems()
+        +OrderStatus getStatus()
+        +LocalDateTime getFecha()
+        +Integer getId()
+    }
+    class IInvoice {
+        <<interface>>
+        +Integer getId()
+        +Integer getOrderId()
+        +LocalDateTime getFechaEmision()
+        +byte[] getContenidoPDF()
+    }
+    class IAddress {
+        <<interface>>
+        +String getCalle()
+        +String getCiudad()
+        +String getCodigoPostal()
+        +String getPais()
     }
 
+    %% Implementations
     class ClientImpl {
-        +Clientempl(name: String, email: String, id: Integer, address: String, phone: String)
-        +getName(): String
-        +getEmail(): String
-        +getId(): Integer
-        +getAddress(): String
-        +getPhone(): String
-        +sendMessage(): void
-        +orderStatus(): void
-        +orderHistory(): void
-        +requestPayment(): void
+        -int id
+        -String nombre
+        -String email
+        -String password
+        -Address direccion
+        +ClientImpl(int id, String nombre, String email, String password, Address direccion)
+        +Address getDireccion()
+    }
+    class AdminImpl {
+        -int id
+        -String nombre
+        -String email
+        -String password
+        +AdminImpl(int id, String nombre, String email, String password)
+        +void manageAll()
+    }
+    class ProductImpl {
+        -int id
+        -String nombre
+        -String descripcion
+        -BigDecimal precio
+        -int stock
+        -LocalDate fechaCaducidad
+        +ProductImpl(int id, String nombre, String descripcion, BigDecimal precio, int stock, LocalDate fechaCaducidad)
+        +int getId()
+        +String getNombre()
+        +String getDescripcion()
+        +BigDecimal getPrecio()
+        +int getStock()
+        +LocalDate getFechaCaducidad()
+    }
+    class SaleImpl {
+        -Integer idSale
+        -List~IProduct~ products
+        -Double totalPrice
+        -LocalDate date
+        -PaymentMethod paymentMethod
+        +SaleImpl(List~IProduct~ products, LocalDate date, PaymentMethod paymentMethod)
+        +Double calculateTotalPrice()
+        +Integer getIdSale()
+        +List~IProduct~ getProducts()
+        +Double getTotalPrice()
+        +LocalDate getDate()
+        +PaymentMethod getPaymentMethod()
+    }
+    class SupplierOrderImpl {
+        -Integer id
+        -Integer adminId
+        -LocalDateTime fecha
+        -List~SupplierOrderItem~ items
+        -OrderStatus status
+        +SupplierOrderImpl(Integer adminId)
+        +void addItem(int productId, int cantidad)
+        +List~SupplierOrderItem~ getItems()
+        +OrderStatus getStatus()
+        +LocalDateTime getFecha()
+        +Integer getId()
+    }
+    class InvoiceImpl {
+        -Integer id
+        -Integer orderId
+        -LocalDateTime fechaEmision
+        -byte[] contenidoPDF
+        +InvoiceImpl(Integer orderId, byte[] contenidoPDF)
+        +Integer getId()
+        +Integer getOrderId()
+        +LocalDateTime getFechaEmision()
+        +byte[] getContenidoPDF()
+    }
+    class AddressImpl {
+        -String calle
+        -String ciudad
+        -String codigoPostal
+        -String pais
+        +AddressImpl(String calle, String ciudad, String codigoPostal, String pais)
+        +String getCalle()
+        +String getCiudad()
+        +String getCodigoPostal()
+        +String getPais()
     }
 
-    class Supplier {
-        <<interface>>
-        +SettleDebt(): void
-        +PlaceOrder(): void
+    %% Model Class
+    class SupplierOrderItem {
+        +int productId
+        +int cantidad
     }
 
-    class SupplierImpl {
-        +SupplierImpl(name: String, email: String, id: Integer, address: String, phone: String)
-        +getName(): String
-        +getEmail(): String
-        +getId(): Integer
-        +getAddress(): String
-        +getPhone(): String
-        +sendMessage(): void
-        +orderStatus(): void
-        +orderHistory(): void
-        +Settledebt(): void
-        +PlaceOrder(): void
+    %% Enums
+    class PaymentMethod {
+        <<enumeration>>
+        CASH
+        CARD
+        PAYPAL
+    }
+    class OrderStatus {
+        <<enumeration>>
+        PENDING
+        CONFIRMED
+        SHIPPED
+        DELIVERED
+        CANCELLED
     }
 
-    class Ticket {
-        <<interface>>
-        +getIdFactura(): Integer
-        +getIdClient(): Integer
-        +getProducts(): List<Product>
-        +getTotalPrice(): Double
-        +getDate(): LocalDate
-        +getPaymentMethod(): String
-        +calculateTotalPrice(): Double
-        +getIdSale(): Integer
-    }
+    %% Inheritances and Implementations
+    User <|-- ClientImpl
+    User <|-- AdminImpl
+    IClient <|.. ClientImpl
+    IAdmin <|.. AdminImpl
+    IProduct <|.. ProductImpl
+    ISale <|.. SaleImpl
+    ISupplierOrder <|.. SupplierOrderImpl
+    IInvoice <|.. InvoiceImpl
+    IAddress <|.. AddressImpl
 
-    class TicketImpl {
-        -idTicket: Integer
-        -ClientImpl: Client
-        -SaleImpl: Sale
-        -totalPrice: Double
-        -date: String
-        -PaymentMethod: String
-        +FacturaImpl(idClient: Integer, products: List<Product>, totalPrice: Double, date: String, paymentMethod: String)
-        +getIdFactura(): Integer
-        +getIdClient(): Integer
-        +getProducts(): List<Product>
-        +getTotalPrice(): Double
-        +getDate(): LocalDate
-        +getPaymentMethod(): String
-        +calculateTotalPrice(): Double
-        +getIdSale(): Integer
-    }
-
-    class OrderSupplier {
-        <<interface>>
-        +getIdOrder(): Integer
-        +getProducts(): List<Product>
-        +getTotalPrice(): Double
-        +getDate(): String
-        +getPaymentMethod(): String
-    }
-
-    class OrderSupplierImpl {
-        -idOrder: Integer
-        -products: List<Product>
-        -totalPrice: Double
-        -date: String
-        -PaymentMethod: String
-        +OrderSupplierImpl(products: List<Product>, totalPrice: Double, date: String, paymentMethod: String)
-        +getIdOrder(): Integer
-        +getProducts(): List<Product>
-        +getTotalPrice(): Double
-        +getDate(): String
-        +getPaymentMethod(): String
-    }
-
-    class EmailService {
-        <<interface>>
-        +sendEmail(): void
-    }
-
-    class EmailServiceImpl {
-        -subject: String
-        -body: String
-        -date: String
-        -Client: Client
-        -Supplier: Supplier
-        +EmailServiceImpl(subject: String, body: String, date: String, Client: Client)
-        +EmailServiceImpl(subject: String, body: String, date: String, Supplier: Supplier)
-        +sendEmail(): void
-    }
-
-    Product <|.. ProductImpl
-    Sale <|.. SaleImpl
-    PeopleConnected <|.. PeopleConnectedImpl
-    Client <|-- PeopleConnectedImpl
-    Client <|.. ClientImpl
-    Supplier <|-- PeopleConnectedImpl
-    Supplier <|.. SupplierImpl
-    Ticket <|.. TicketImpl
-    OrderSupplier <|.. OrderSupplierImpl
-    EmailService <|.. EmailServiceImpl
-
-    SaleImpl  "1" <-- "*" ProductImpl : contains
-    TicketImpl  "1" <-- "1" SaleImpl : contains
-    
+    %% Associations
+    SaleImpl --> IProduct
+    SaleImpl --> PaymentMethod
+    SaleImpl --> OrderStatus
+    SupplierOrderImpl --> SupplierOrderItem
+    SupplierOrderItem --> IProduct
+    InvoiceImpl --> SaleImpl
+    InvoiceImpl --> byte
+    SaleImpl --> LocalDate
+    SupplierOrderImpl --> LocalDateTime
+    InvoiceImpl --> LocalDateTime
 ```
