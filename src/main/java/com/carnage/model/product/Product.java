@@ -1,10 +1,12 @@
 package com.carnage.model;
 
 import com.carnage.model.product.ProductCategory;
+import jakarta.persistence.Entity;
 
 import java.time.LocalDate;
 import java.util.Objects;
 
+@Entity
 public class Product {
 
     private Integer identifier;
