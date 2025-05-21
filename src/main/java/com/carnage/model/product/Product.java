@@ -1,25 +1,22 @@
 package com.carnage.model;
 
 import com.carnage.model.product.ProductCategory;
-import jakarta.persistence.Entity;
 
 import java.time.LocalDate;
 import java.util.Objects;
 
-@Entity
 public class Product {
 
-    private Integer identifier;
-    private static Integer identifierCounter = 0;
+    private Integer id;
     private String name;
     private Double price;
     private int quantityInStock;
     private ProductCategory category;
     private LocalDate expirationDate;
 
+    public Product() {}
 
-    Product(String name, Double price, int quantityInStock, ProductCategory category, LocalDate expirationDate) {
-        this.identifier = identifierCounter++;
+    public Product(String name, Double price, int quantityInStock, ProductCategory category, LocalDate expirationDate) {
         this.name = name;
         this.price = price;
         this.quantityInStock = quantityInStock;
@@ -27,49 +24,43 @@ public class Product {
         this.expirationDate = expirationDate;
     }
 
-
-    public Integer getIdentifier() {
-        return this.identifier;
+    public Integer getId() {
+        return this.id;
+    }
+    public void setId(Integer id) {
+        this.id = id;
     }
 
     public String getName() {
         return this.name;
     }
-
     public Double getPrice() {
         return this.price;
     }
-
     public int getQuantityInStock() {
         return this.quantityInStock;
     }
-
     public ProductCategory getCategory() {
         return this.category;
     }
-
     public LocalDate getExpirationDate() {
         return this.expirationDate;
-    }
-
-    void assignIdentifier(Integer id) {
-        this.identifier = id;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Product p)) return false;
-        return Objects.equals(identifier, p.identifier);
-    }
+        if (o == null || getClass() != o.getClass()) return false;
 
+        Product product = (Product) o;
+        return Objects.equals(id, product.id);
+    }
     @Override
     public int hashCode() {
-        return Objects.hash(identifier);
+        return Objects.hash(id);
     }
-
     @Override
     public String toString() {
-        return "Product{" + identifier + ", " + name + "}";
+        return "Product{" + id + ", " + name + '}';
     }
 }
