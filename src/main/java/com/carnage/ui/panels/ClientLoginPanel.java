@@ -20,14 +20,7 @@ public class ClientLoginPanel extends JPanel {
     private UserService userService;
     private EmailNotificationService emailService;
 
-    /**
-     * Constructs the client login panel.
-     *
-     * @param userService     service for authentication
-     * @param emailService    service for notifications
-     * @param onRegisterClick callback when "register" link is clicked
-     * @param onLoginSuccess  callback when login succeeds, receives the authenticated Client
-     */
+
     public ClientLoginPanel(
             UserService userService,
             EmailNotificationService emailService,
@@ -44,36 +37,37 @@ public class ClientLoginPanel extends JPanel {
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // Email label and field
-        gbc.gridx = 0; gbc.gridy = 0;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         add(new JLabel("Email:"), gbc);
 
-        gbc.gridx = 1; gbc.gridy = 0;
+        gbc.gridx = 1;
+        gbc.gridy = 0;
         emailField = new JTextField();
         // TODO: add regex validation for email format
         add(emailField, gbc);
 
-        // Password label and field
-        gbc.gridx = 0; gbc.gridy = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
         add(new JLabel("Password:"), gbc);
 
-        gbc.gridx = 1; gbc.gridy = 1;
+        gbc.gridx = 1;
+        gbc.gridy = 1;
         passwordField = new JPasswordField();
         add(passwordField, gbc);
 
-        // Login button
-        gbc.gridx = 1; gbc.gridy = 2;
+        gbc.gridx = 1;
+        gbc.gridy = 2;
         loginButton = new JButton("Entrar");
         add(loginButton, gbc);
 
-        // Register link
-        gbc.gridx = 1; gbc.gridy = 3;
+        gbc.gridx = 1;
+        gbc.gridy = 3;
         registerLink = new JLabel("<HTML><U>Si aún no te has registrado, pincha aquí</U></HTML>");
         registerLink.setForeground(Color.BLUE.darker());
         registerLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         add(registerLink, gbc);
 
-        // Action listeners
         loginButton.addActionListener(e -> {
             String email = emailField.getText().trim();
             String password = new String(passwordField.getPassword());
