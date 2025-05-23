@@ -18,10 +18,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-/**
- * Panel para el registro de nuevos clientes.
- * Los campos del formulario se vacían cada vez que el panel se muestra.
- */
 public class ClientRegistrationPanel extends JPanel {
 
     private final UserService userService;
@@ -37,10 +33,7 @@ public class ClientRegistrationPanel extends JPanel {
     private JButton registerButton;
     private JButton cancelButton;
 
-    /**
-     * Constructs the registration panel.
-     * Fields are cleared whenever this panel becomes visible.
-     */
+
     public ClientRegistrationPanel(
             UserService userService,
             EmailNotificationService emailService,
@@ -48,50 +41,49 @@ public class ClientRegistrationPanel extends JPanel {
             Consumer<Client> onSuccess,
             Runnable onCancel
     ) {
-        this.userService  = Objects.requireNonNull(userService);
+        this.userService = Objects.requireNonNull(userService);
         this.emailService = Objects.requireNonNull(emailService);
 
         setLayout(new GridBagLayout());
         setBackground(Color.WHITE);
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8,8,8,8);
-        gbc.fill   = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         int row = 0;
 
-        // Initialize fields
-        nameField      = new JTextField();
-        surnameField   = new JTextField();
-        emailField     = new JTextField();
-        passwordField  = new JPasswordField();
-        addressField   = new JTextField();
-        phoneField     = new JTextField();
+        nameField = new JTextField();
+        surnameField = new JTextField();
+        emailField = new JTextField();
+        passwordField = new JPasswordField();
+        addressField = new JTextField();
+        phoneField = new JTextField();
         paymentMethodCombo = new JComboBox<>(paymentMethods.toArray(new PaymentMethod[0]));
 
-        // Add fields to layout
-        addField("Nombre:",     nameField,      row++, gbc);
-        addField("Apellidos:",  surnameField,   row++, gbc);
-        addField("Email:",      emailField,     row++, gbc);
-        addField("Contraseña:", passwordField,  row++, gbc);
-        addField("Dirección:",  addressField,   row++, gbc);
-        addField("Teléfono:",   phoneField,     row++, gbc);
+        addField("Nombre:", nameField, row++, gbc);
+        addField("Apellidos:", surnameField, row++, gbc);
+        addField("Email:", emailField, row++, gbc);
+        addField("Contraseña:", passwordField, row++, gbc);
+        addField("Dirección:", addressField, row++, gbc);
+        addField("Teléfono:", phoneField, row++, gbc);
 
-        gbc.gridx = 0; gbc.gridy = row;
+        gbc.gridx = 0;
+        gbc.gridy = row;
         add(new JLabel("Método de Pago:"), gbc);
         gbc.gridx = 1;
         add(paymentMethodCombo, gbc);
         row++;
 
-        // Buttons panel
-        gbc.gridx = 0; gbc.gridy = row; gbc.gridwidth = 2;
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER,20,0));
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        gbc.gridwidth = 2;
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
         btnPanel.setBackground(Color.WHITE);
         registerButton = new JButton("Registrar");
-        cancelButton   = new JButton("Volver al login");
+        cancelButton = new JButton("Volver al login");
         btnPanel.add(registerButton);
         btnPanel.add(cancelButton);
         add(btnPanel, gbc);
 
-        // Clear fields when panel shown
         addComponentListener(new ComponentAdapter() {
             @Override
             public void componentShown(ComponentEvent e) {
@@ -99,7 +91,6 @@ public class ClientRegistrationPanel extends JPanel {
             }
         });
 
-        // Register button listener
         registerButton.addActionListener(e -> {
             try {
                 NameValidator.validate(nameField.getText());
@@ -150,9 +141,7 @@ public class ClientRegistrationPanel extends JPanel {
         cancelButton.addActionListener(e -> onCancel.run());
     }
 
-    /**
-     * Clears all input fields and resets the payment method selection.
-     */
+
     private void clearFields() {
         nameField.setText("");
         surnameField.setText("");
@@ -163,9 +152,10 @@ public class ClientRegistrationPanel extends JPanel {
         paymentMethodCombo.setSelectedIndex(-1);
     }
 
-    /** Helper to add label + field in the layout. */
     private void addField(String label, JComponent field, int row, GridBagConstraints gbc) {
-        gbc.gridx = 0; gbc.gridy = row; gbc.gridwidth = 1;
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        gbc.gridwidth = 1;
         add(new JLabel(label), gbc);
         gbc.gridx = 1;
         add(field, gbc);
