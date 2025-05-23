@@ -1,3 +1,4 @@
+// src/main/java/com/carnage/ui/panels/AdminLoginPanel.java
 package com.carnage.ui.panels;
 
 import com.carnage.model.user.admin.Admin;
@@ -7,63 +8,89 @@ import com.carnage.util.dao.EntityNotFoundException;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.function.Consumer;
 
+/**
+ * Panel for administrator login with improved styling.
+ */
 public class AdminLoginPanel extends JPanel {
 
-    private JTextField emailField;
-    private JPasswordField passwordField;
-    private JButton loginButton;
-    private UserService userService;
+    private final UserService userService;
+    private final Consumer<Admin> onSuccess;
+    private JTextField txtEmail;
+    private JPasswordField txtPassword;
 
-    /**
-     * Constructs the admin login panel.
-     *
-     * @param userService    service for authentication
-     * @param onLoginSuccess callback when login succeeds, receives the authenticated Admin
-     */
-    public AdminLoginPanel(
-            UserService userService,
-            java.util.function.Consumer<Admin> onLoginSuccess
-    ) {
+    public AdminLoginPanel(UserService userService, Consumer<Admin> onSuccess) {
         this.userService = userService;
+        this.onSuccess = onSuccess;
+        initComponents();
+    }
 
+    private void initComponents() {
         setLayout(new GridBagLayout());
         setBackground(Color.WHITE);
-
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.insets = new Insets(10, 20, 10, 20);
+        gbc.anchor = GridBagConstraints.CENTER;
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // Email label and field
-        gbc.gridx = 0; gbc.gridy = 0;
-        add(new JLabel("Email:"), gbc);
-        gbc.gridx = 1;
-        emailField = new JTextField();
-        add(emailField, gbc);
+        // Title
+        JLabel lblTitle = new JLabel("Admin Login", SwingConstants.CENTER);
+        lblTitle.setFont(new Font("SansSerif", Font.BOLD, 24));
+        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
+        add(lblTitle, gbc);
 
-        // Password label and field
-        gbc.gridx = 0; gbc.gridy = 1;
-        add(new JLabel("Password:"), gbc);
+        // Email label
+        JLabel lblEmail = new JLabel("Email:");
+        lblEmail.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        gbc.gridy = 1; gbc.gridwidth = 1;
+        add(lblEmail, gbc);
+
+        // Email field
+        txtEmail = new JTextField(20);
+        txtEmail.setFont(new Font("SansSerif", Font.PLAIN, 16));
         gbc.gridx = 1;
-        passwordField = new JPasswordField();
-        add(passwordField, gbc);
+        add(txtEmail, gbc);
+
+        // Password label
+        JLabel lblPassword = new JLabel("Password:");
+        lblPassword.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        gbc.gridx = 0; gbc.gridy = 2;
+        add(lblPassword, gbc);
+
+        // Password field
+        txtPassword = new JPasswordField(20);
+        txtPassword.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        gbc.gridx = 1;
+        add(txtPassword, gbc);
 
         // Login button
-        gbc.gridx = 1; gbc.gridy = 2;
-        loginButton = new JButton("Entrar");
-        add(loginButton, gbc);
+        JButton btnLogin = new JButton("Login");
+        btnLogin.setFont(new Font("SansSerif", Font.BOLD, 16));
+        btnLogin.setBackground(new Color(0, 120, 215));
+        btnLogin.setForeground(Color.BLACK);
+        gbc.gridy = 3; gbc.gridx = 0; gbc.gridwidth = 2;
+        gbc.insets = new Insets(20, 20, 10, 20);
+        add(btnLogin, gbc);
 
-        loginButton.addActionListener(e -> {
-            String email = emailField.getText().trim();
-            String password = new String(passwordField.getPassword());
-            try {
-                Admin admin = (Admin) userService.authenticate(email, password);
-                JOptionPane.showMessageDialog(this, "Login successful");
-                onLoginSuccess.accept(admin);
-            } catch (EntityNotFoundException ex) {
-                JOptionPane.showMessageDialog(this, "Invalid credentials", "Error", JOptionPane.ERROR_MESSAGE);
-            } catch (DAOException ex) {
-                JOptionPane.showMessageDialog(this, "Data access error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        btnLogin.addActionListener(new ActionListener() {
+            @Override public void actionPerformed(ActionEvent e) {
+                try {
+                    Admin admin = (Admin) userService.authenticate(
+                            txtEmail.getText().trim(),
+                            new String(txtPassword.getPassword())
+                    );
+                    onSuccess.accept(admin);
+                } catch (DAOException ex) {
+                    JOptionPane.showMessageDialog(
+                            AdminLoginPanel.this,
+                            "Login failed: " + ex.getMessage(),
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                }
             }
         });
     }
