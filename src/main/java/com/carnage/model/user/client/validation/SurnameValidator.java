@@ -4,6 +4,7 @@ import com.carnage.util.dao.InvalidTextEnterException;
 
 public class SurnameValidator {
 
+    private final static String REGEX = "^\\p{L}+ \\p{L}+$";
     /**
      * Validates the given surname.
      *
@@ -15,7 +16,7 @@ public class SurnameValidator {
             throw new InvalidTextEnterException("Surname cannot be empty");
         }
         String trimmed = surname.trim();
-        if (!trimmed.matches("^[\\p{L}]+$")) {
+        if (!trimmed.matches(REGEX)) {
             throw new InvalidTextEnterException("Surname must contain only letters");
         }
         if (trimmed.length() < 2 || trimmed.length() > 50) {

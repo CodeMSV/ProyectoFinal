@@ -64,16 +64,16 @@ public class EmailNotificationService {
         String subject = "Welcome to Macota, " + name;
         String body = String.format(
                 "Dear %s,%n%n" +
-                        "Welcome to Macota! We are delighted that you have chosen our platform for your pet care needs. " +
-                        "At Macota, we strive to provide exceptional service and quality products to keep your furry friends happy and healthy.%n%n" +
-                        "Here are a few things you can do now:%n" +
-                        "1. Browse our <link>catalog of products</link> tailored to your pet's needs.%n" +
-                        "2. Review our <link>care guides and tips</link> written by industry experts.%n" +
-                        "3. Contact our support team anytime at support@macota.com for personalized assistance.%n%n" +
-                        "We look forward to serving you. If you have any questions, feel free to reply to this email or reach us at +34 900 123 456.%n%n" +
+                        "Welcome to Macota Butcher Shop! We are delighted that you have chosen our shop for your fresh meat needs. " +
+                        "At Macota Butcher Shop, we strive to offer the finest cuts and the highest quality.%n%n" +
+                        "Here’s what you can do now:%n" +
+                        "1. Browse our <link>meat selection catalog</link>, carefully chosen for your satisfaction.%n" +
+                        "2. Check out our <link>recipes and preparation tips</link> crafted by master butchers.%n" +
+                        "3. Contact our team at +34 900 123 456 or email us at hello@macota.com for personalized assistance.%n%n" +
+                        "We look forward to serving you. If you have any questions, just reply to this email or visit us at Calle Falsa 123, Seville, Spain.%n%n" +
                         "Sincerely,%n" +
-                        "The Macota Team%n" +
-                        "Macota S.L. | Calle Falsa 123, Sevilla, Spain%n" +
+                        "The Macota Butcher Shop Team%n" +
+                        "Macota Butcher Shop S.L. | Calle Falsa 123, Seville, Spain%n" +
                         "", name);
         sendEmail(email, subject, body);
     }
