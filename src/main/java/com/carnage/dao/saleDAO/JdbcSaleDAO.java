@@ -14,107 +14,196 @@ import java.util.List;
 
 public class JdbcSaleDAO implements SaleDAO {
 
-    private final ConnectionDDBB cm;
+    private final ConnectionDDBB databaseConnectionManager;
 
-    public JdbcSaleDAO(ConnectionDDBB cm) {
-        this.cm = cm;
+    public JdbcSaleDAO(ConnectionDDBB databaseConnectionManager) {
+        this.databaseConnectionManager = databaseConnectionManager;
     }
 
+    /**
+     * Inserts a new Sale record into the database and updates the Sale object with its generated ID.
+     *
+     * @param sale the Sale object containing clientId, date, totalPrice, and paymentMethod
+     * @throws DAOException if a database error occurs or no rows are inserted
+     */
     @Override
     public void createSale(Sale sale) throws DAOException {
-        String sql = "INSERT INTO sale (client_id, sale_date, total_price, payment_method) VALUES (?, ?, ?, ?)";
-        try (Connection conn = cm.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        String insertSaleSql =
+                "INSERT INTO sale (client_id, sale_date, total_price, payment_method) VALUES (?, ?, ?, ?)";
+        try (Connection dbConnection = databaseConnectionManager.getConnection();
+             PreparedStatement insertStatement = dbConnection.prepareStatement(
+                     insertSaleSql, Statement.RETURN_GENERATED_KEYS)) {
 
-            ps.setInt(1, sale.getClientId());
-            ps.setDate(2, Date.valueOf(sale.getDate()));
-            ps.setDouble(3, sale.getTotalPrice());
-            ps.setString(4, sale.getPaymentMethod().name());
+            insertStatement.setInt(1, sale.getClientId());
+            insertStatement.setDate(2, Date.valueOf(sale.getDate()));
+            insertStatement.setDouble(3, sale.getTotalPrice());
+            insertStatement.setString(4, sale.getPaymentMethod().name());
 
-            int affected = ps.executeUpdate();
-            if (affected == 0) {
+            int affectedRows = insertStatement.executeUpdate();
+            if (affectedRows == 0) {
                 throw new DAOException("Creating sale failed, no rows affected.");
             }
 
-            // Recuperar el ID generado y asignarlo al objeto
-            try (ResultSet rs = ps.getGeneratedKeys()) {
-                if (rs.next()) {
-                    sale.setId(rs.getInt(1));
+            try (ResultSet generatedKeys = insertStatement.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    sale.setId(generatedKeys.getInt(1));
+                } else {
+                    throw new DAOException("Creating sale failed, no ID obtained.");
                 }
             }
-        } catch (SQLException ex) {
-            throw new DAOException("Error creating sale", ex);
-        }
-    }
 
-    @Override
-    public Sale findById(int saleId) throws DAOException, EntityNotFoundException {
-        String sql = "SELECT id, client_id, sale_date, total_price, payment_method FROM sale WHERE id = ?";
-        try (Connection conn = cm.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, saleId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) {
-                    throw new EntityNotFoundException("Sale not found with ID=" + saleId);
-                }
-                return mapRowToSale(rs);
-            }
-        } catch (SQLException ex) {
-            throw new DAOException("Error finding sale by ID", ex);
-        }
-    }
-
-    @Override
-    public List<Sale> findAll() throws DAOException {
-        String sql = "SELECT id, client_id, sale_date, total_price, payment_method FROM sale";
-        try (Connection conn = cm.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            List<Sale> list = new ArrayList<>();
-            while (rs.next()) {
-                list.add(mapRowToSale(rs));
-            }
-            return list;
-        } catch (SQLException ex) {
-            throw new DAOException("Error fetching all sales", ex);
-        }
-    }
-
-    @Override
-    public List<Sale> findByClientId(int clientId) throws DAOException {
-        String sql = "SELECT id, client_id, sale_date, total_price, payment_method FROM sale WHERE client_id = ?";
-        try (Connection conn = cm.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, clientId);
-            try (ResultSet rs = ps.executeQuery()) {
-                List<Sale> list = new ArrayList<>();
-                while (rs.next()) {
-                    list.add(mapRowToSale(rs));
-                }
-                return list;
-            }
-        } catch (SQLException ex) {
-            throw new DAOException("Error fetching sales by client", ex);
+        } catch (SQLException sqlException) {
+            throw new DAOException("Error creating sale", sqlException);
         }
     }
 
     /**
-     * Mapea la fila actual del ResultSet a un objeto Sale,
-     * asignando también el id generado.
+     * Retrieves a Sale by its ID, including all associated products.
+     *
+     * @param saleId the ID of the sale to retrieve
+     * @return the Sale object populated with its products
+     * @throws DAOException            if a database error occurs
+     * @throws EntityNotFoundException if no sale exists with the given ID
      */
-    private Sale mapRowToSale(ResultSet rs) throws SQLException {
-        int id        = rs.getInt("id");
-        int clientId  = rs.getInt("client_id");
-        LocalDate date = rs.getDate("sale_date").toLocalDate();
-        double total  = rs.getDouble("total_price");
-        PaymentMethod pm = PaymentMethod.valueOf(rs.getString("payment_method"));
+    @Override
+    public Sale findById(int saleId) throws DAOException, EntityNotFoundException {
+        String selectSaleByIdSql =
+                "SELECT id, client_id, sale_date, total_price, payment_method FROM sale WHERE id = ?";
+        try (Connection dbConnection = databaseConnectionManager.getConnection();
+             PreparedStatement selectStatement = dbConnection.prepareStatement(selectSaleByIdSql)) {
 
-        // Por ahora dejamos la lista de productos vacía; luego la podrás poblar via SaleItemDAO
-        Sale sale = new Sale(clientId, new ArrayList<Product>(), total, date, pm);
-        sale.setId(id);
+            selectStatement.setInt(1, saleId);
+
+            try (ResultSet resultSet = selectStatement.executeQuery()) {
+                if (!resultSet.next()) {
+                    throw new EntityNotFoundException("Sale not found with ID=" + saleId);
+                }
+                Sale sale = mapRowToSale(resultSet);
+                sale.setProducts(findProductsBySaleId(sale.getId()));
+                return sale;
+            }
+
+        } catch (SQLException sqlException) {
+            throw new DAOException("Error finding sale by ID", sqlException);
+        }
+    }
+
+    /**
+     * Retrieves all Sale records from the database, each with its associated products.
+     *
+     * @return a list of all Sale objects
+     * @throws DAOException if a database error occurs
+     */
+    @Override
+    public List<Sale> findAll() throws DAOException {
+        String selectAllSalesSql =
+                "SELECT id, client_id, sale_date, total_price, payment_method FROM sale";
+        try (Connection dbConnection = databaseConnectionManager.getConnection();
+             PreparedStatement selectStatement = dbConnection.prepareStatement(selectAllSalesSql);
+             ResultSet resultSet = selectStatement.executeQuery()) {
+
+            List<Sale> salesList = new ArrayList<>();
+            while (resultSet.next()) {
+                Sale sale = mapRowToSale(resultSet);
+                sale.setProducts(findProductsBySaleId(sale.getId()));
+                salesList.add(sale);
+            }
+            return salesList;
+
+        } catch (SQLException sqlException) {
+            throw new DAOException("Error fetching all sales", sqlException);
+        }
+    }
+
+    /**
+     * Retrieves all Sale records for a given client ID, each with its associated products.
+     *
+     * @param clientId the ID of the client whose sales to fetch
+     * @return a list of Sale objects for the specified client
+     * @throws DAOException if a database error occurs
+     */
+    @Override
+    public List<Sale> findByClientId(int clientId) throws DAOException {
+        String selectSalesByClientSql =
+                "SELECT id, client_id, sale_date, total_price, payment_method FROM sale WHERE client_id = ?";
+        try (Connection dbConnection = databaseConnectionManager.getConnection();
+             PreparedStatement selectStatement = dbConnection.prepareStatement(selectSalesByClientSql)) {
+
+            selectStatement.setInt(1, clientId);
+
+            try (ResultSet resultSet = selectStatement.executeQuery()) {
+                List<Sale> salesByClientList = new ArrayList<>();
+                while (resultSet.next()) {
+                    Sale sale = mapRowToSale(resultSet);
+                    sale.setProducts(findProductsBySaleId(sale.getId()));
+                    salesByClientList.add(sale);
+                }
+                return salesByClientList;
+            }
+
+        } catch (SQLException sqlException) {
+            throw new DAOException("Error fetching sales by client", sqlException);
+        }
+    }
+
+    /**
+     * Maps the current row of the given ResultSet to a Sale object (without products).
+     *
+     * @param resultSet the ResultSet positioned at the desired row
+     * @return a Sale object with id, clientId, date, totalPrice, and paymentMethod set
+     * @throws SQLException if a database access error occurs
+     */
+    private Sale mapRowToSale(ResultSet resultSet) throws SQLException {
+        int saleId = resultSet.getInt("id");
+        int clientId = resultSet.getInt("client_id");
+        LocalDate saleDate = resultSet.getDate("sale_date").toLocalDate();
+        double totalPrice = resultSet.getDouble("total_price");
+        PaymentMethod method = PaymentMethod.valueOf(resultSet.getString("payment_method"));
+
+        Sale sale = new Sale(clientId, new ArrayList<>(), totalPrice, saleDate, method);
+        sale.setId(saleId);
         return sale;
+    }
+
+    /**
+     * Loads all products for a given sale, repeating each product according to its quantity.
+     *
+     * @param saleId the ID of the sale whose items to load
+     * @return a list of Products, repeated by quantity sold
+     * @throws DAOException if a database error occurs
+     */
+    private List<Product> findProductsBySaleId(int saleId) throws DAOException {
+        String selectSaleItemsSql =
+                "SELECT p.id, p.name, si.quantity, si.price_at_sale " +
+                        "FROM sale_item si " +
+                        "JOIN product p ON si.product_id = p.id " +
+                        "WHERE si.sale_id = ?";
+        List<Product> productsList = new ArrayList<>();
+
+        try (Connection dbConnection = databaseConnectionManager.getConnection();
+             PreparedStatement selectStatement = dbConnection.prepareStatement(selectSaleItemsSql)) {
+
+            selectStatement.setInt(1, saleId);
+
+            try (ResultSet resultSet = selectStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    Product product = new Product(
+                            resultSet.getString("name"),
+                            resultSet.getDouble("price_at_sale"),
+                            0, null, null
+                    );
+                    product.setId(resultSet.getInt("id"));
+                    int quantity = resultSet.getInt("quantity");
+                    for (int i = 0; i < quantity; i++) {
+                        productsList.add(product);
+                    }
+                }
+            }
+
+        } catch (SQLException sqlException) {
+            throw new DAOException("Error loading sale items for sale " + saleId, sqlException);
+        }
+
+        return productsList;
     }
 }

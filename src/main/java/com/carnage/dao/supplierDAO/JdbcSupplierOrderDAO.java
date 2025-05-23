@@ -12,33 +12,31 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * JDBC implementation of SupplierOrderDAO, matching exactly
- * the interface methods: createOrder, findAll, findById.
- */
+
 public class JdbcSupplierOrderDAO implements SupplierOrderDAO {
 
-    private final ConnectionDDBB cm;
+    private final ConnectionDDBB databaseConnectionManager;
     private final JdbcSupplierOrderItemDAO itemDAO;
 
-    /**
-     * @param cm      connection manager
-     */
-    public JdbcSupplierOrderDAO(ConnectionDDBB cm) {
-        this.cm = cm;
-        this.itemDAO = new JdbcSupplierOrderItemDAO(cm);
+
+    public JdbcSupplierOrderDAO(ConnectionDDBB databaseConnectionManager) {
+        this.databaseConnectionManager = databaseConnectionManager;
+        this.itemDAO = new JdbcSupplierOrderItemDAO(databaseConnectionManager);
     }
 
+
     /**
-     * {@inheritDoc}
+     * Creates a new supplier order in the database.
+     *
+     * @param order The supplier order to create.
+     * @throws DAOException If an error occurs while creating the order.
      */
     @Override
     public void createOrder(SupplierOrder order) throws DAOException {
         String sql = "INSERT INTO supplier_order (order_date, status) VALUES (?, ?)";
-        try (Connection conn = cm.getConnection();
+        try (Connection conn = databaseConnectionManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            // la fecha de creación
             ps.setTimestamp(1,
                     order.getCreatedAt() != null
                             ? Timestamp.valueOf(order.getCreatedAt())
@@ -59,7 +57,6 @@ public class JdbcSupplierOrderDAO implements SupplierOrderDAO {
                 }
             }
 
-            // insertar items asociados
             for (SupplierOrderItem item : order.getItems()) {
                 item.setId(order.getId());
                 itemDAO.createItem(item);
@@ -70,14 +67,19 @@ public class JdbcSupplierOrderDAO implements SupplierOrderDAO {
         }
     }
 
+
+
     /**
-     * {@inheritDoc}
+     * Updates an existing supplier order in the database.
+     *
+     * @param order The supplier order to update.
+     * @throws DAOException If an error occurs while updating the order.
      */
     @Override
     public List<SupplierOrder> findAll() throws DAOException {
         String sql = "SELECT id, order_date, status FROM supplier_order";
         List<SupplierOrder> orders = new ArrayList<>();
-        try (Connection conn = cm.getConnection();
+        try (Connection conn = databaseConnectionManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -92,13 +94,18 @@ public class JdbcSupplierOrderDAO implements SupplierOrderDAO {
         }
     }
 
+
+
     /**
-     * {@inheritDoc}
+     * Updates an existing supplier order in the database.
+     *
+     * @param order The supplier order to update.
+     * @throws DAOException If an error occurs while updating the order.
      */
     @Override
     public SupplierOrder findById(int orderId) throws DAOException, EntityNotFoundException {
         String sql = "SELECT id, order_date, status FROM supplier_order WHERE id = ?";
-        try (Connection conn = cm.getConnection();
+        try (Connection conn = databaseConnectionManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, orderId);
@@ -113,8 +120,13 @@ public class JdbcSupplierOrderDAO implements SupplierOrderDAO {
         }
     }
 
+
+
     /**
-     * Mapea una fila de ResultSet a SupplierOrder, cargando sus items.
+     * Updates an existing supplier order in the database.
+     *
+     * @param order The supplier order to update.
+     * @throws DAOException If an error occurs while updating the order.
      */
     private SupplierOrder mapRowToOrder(ResultSet rs) throws SQLException, DAOException {
         int id   = rs.getInt("id");

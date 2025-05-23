@@ -10,16 +10,24 @@ import java.util.List;
 
 public class JdbcSupplierOrderItemDAO implements SupplierOrderItemDAO {
 
-    private final ConnectionDDBB cm;
+    private final ConnectionDDBB databaseConnectionManager;
 
-    public JdbcSupplierOrderItemDAO(ConnectionDDBB cm) {
-        this.cm = cm;
+    public JdbcSupplierOrderItemDAO(ConnectionDDBB databaseConnectionManager) {
+        this.databaseConnectionManager = databaseConnectionManager;
     }
 
+
+    /**
+     * Retrieves a list of SupplierOrderItems associated with a specific order ID.
+     *
+     * @param orderId the ID of the supplier order
+     * @return a list of SupplierOrderItems
+     * @throws DAOException if an error occurs while accessing the database
+     */
     @Override
     public List<SupplierOrderItem> findByOrderId(int orderId) throws DAOException {
         String sql = "SELECT id, product_id, quantity FROM supplier_order_item WHERE order_id = ?";
-        try (Connection conn = cm.getConnection();
+        try (Connection conn = databaseConnectionManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, orderId);
@@ -29,9 +37,9 @@ public class JdbcSupplierOrderItemDAO implements SupplierOrderItemDAO {
                     SupplierOrderItem item = new SupplierOrderItem(
                             rs.getInt("product_id"),
                             rs.getInt("quantity"),
-                            orderId    // asociamos por ID, no por objeto
+                            orderId
                     );
-                    // asignamos el id generado en BD al objeto
+
                     item.setId(rs.getInt("id"));
                     items.add(item);
                 }
@@ -42,13 +50,20 @@ public class JdbcSupplierOrderItemDAO implements SupplierOrderItemDAO {
         }
     }
 
+
+    /**
+     * Creates a new SupplierOrderItem in the database.
+     *
+     * @param item the SupplierOrderItem to create
+     * @throws DAOException if an error occurs while accessing the database
+     */
     @Override
     public void createItem(SupplierOrderItem item) throws DAOException {
         String sql = "INSERT INTO supplier_order_item (order_id, product_id, quantity) VALUES (?, ?, ?)";
-        try (Connection conn = cm.getConnection();
+        try (Connection conn = databaseConnectionManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            // solo seteamos FK order_id, producto y cantidad
+
             ps.setInt(1, item.getSupplierOrder());
             ps.setInt(2, item.getProductId());
             ps.setInt(3, item.getQuantity());
@@ -58,7 +73,7 @@ public class JdbcSupplierOrderItemDAO implements SupplierOrderItemDAO {
                 throw new DAOException("Creating SupplierOrderItem failed, no rows affected.");
             }
 
-            // recuperar id generado
+
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
                     item.setId(rs.getInt(1));
