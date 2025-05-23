@@ -19,26 +19,26 @@ import javax.swing.*;
 public class Test {
 
     public static void main(String[] args) {
-        // Initialize JDBC connection manager
+        // 1) Crea tu gestor de conexiones
         ConnectionDDBB connectionManager = new ConnectionDDBB();
 
-        // Instantiate DAOs (JDBC implementations)
-        UserDAO userDAO = new JdbcUserDAO(connectionManager);
-        PaymentMethodDAO paymentMethodDAO = new JdbcPaymentMethodDAO();
-        SaleDAO saleDAO = new JdbcSaleDAO(connectionManager);
-        InvoiceDAO invoiceDAO = new JdbcInvoiceDAO();
-        SupplierOrderDAO orderDAO = new JdbcSupplierOrderDAO(connectionManager);
-        SupplierOrderItemDAO itemDAO = new JdbcSupplierOrderItemDAO(connectionManager);
+        // 2) Instancia TODOS los DAO pasando el connectionManager
+        UserDAO               userDAO               = new JdbcUserDAO(connectionManager);
+        PaymentMethodDAO      paymentMethodDAO      = new JdbcPaymentMethodDAO();
+        SaleDAO               saleDAO               = new JdbcSaleDAO(connectionManager);
+        InvoiceDAO            invoiceDAO            = new JdbcInvoiceDAO();
+        SupplierOrderDAO      orderDAO              = new JdbcSupplierOrderDAO(connectionManager);
+        SupplierOrderItemDAO  itemDAO               = new JdbcSupplierOrderItemDAO(connectionManager);
 
-        // Instantiate services
-        UserService userService = new UserService(userDAO);
-        EmailNotificationService emailService = new EmailNotificationService(userDAO);
-        PaymentMethodService paymentMethodService = new PaymentMethodService(paymentMethodDAO);
-        SaleService saleService = new SaleService(saleDAO);
-        InvoiceService invoiceService = new InvoiceService(invoiceDAO);
-        SupplierOrderService supplierOrderService = new SupplierOrderService(orderDAO, itemDAO);
+        // 3) Crea los servicios con esos DAO
+        UserService           userService           = new UserService(userDAO);
+        EmailNotificationService emailService        = new EmailNotificationService(userDAO);
+        PaymentMethodService  paymentMethodService  = new PaymentMethodService(paymentMethodDAO);
+        SaleService           saleService           = new SaleService(saleDAO);
+        InvoiceService        invoiceService        = new InvoiceService(invoiceDAO);
+        SupplierOrderService  supplierOrderService  = new SupplierOrderService(orderDAO, itemDAO);
 
-        // Launch Swing UI on the Event Dispatch Thread
+        // 4) Lanza la UI
         SwingUtilities.invokeLater(() -> {
             MainFrame frame = new MainFrame(
                     userService,
