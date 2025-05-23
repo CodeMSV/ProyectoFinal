@@ -1,33 +1,37 @@
+// src/main/java/com/carnage/ui/panels/ClientDashboardPanel.java
 package com.carnage.ui.panels;
 
-import com.carnage.model.Invoice;
 import com.carnage.model.Sale;
 import com.carnage.model.user.client.Client;
 import com.carnage.model.user.client.PaymentMethod;
+import com.carnage.service.EmailNotificationService;
 import com.carnage.service.InvoiceService;
-import com.carnage.service.PaymentMethodService;
 import com.carnage.service.ProductService;
 import com.carnage.service.SaleService;
-
+import com.carnage.service.PaymentMethodService;
 import com.carnage.util.dao.DAOException;
+import com.carnage.util.dao.EntityNotFoundException;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class ClientDashboardPanel extends JPanel {
+
     private final Client currentClient;
     private final ProductService productService;
     private final SaleService saleService;
     private final InvoiceService invoiceService;
     private final PaymentMethodService paymentMethodService;
+    private final EmailNotificationService emailService;
     private final Runnable onLogout;
 
     private final CardLayout cardLayout = new CardLayout();
@@ -42,6 +46,7 @@ public class ClientDashboardPanel extends JPanel {
             SaleService saleService,
             InvoiceService invoiceService,
             PaymentMethodService paymentMethodService,
+            EmailNotificationService emailService,
             Runnable onLogout
     ) {
         this.currentClient = currentClient;
@@ -49,12 +54,13 @@ public class ClientDashboardPanel extends JPanel {
         this.saleService = saleService;
         this.invoiceService = invoiceService;
         this.paymentMethodService = paymentMethodService;
+        this.emailService = emailService;
         this.onLogout = onLogout;
 
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
 
-        // Top navigation bar
+
         JPanel topBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
         topBar.setBackground(Color.WHITE);
         JButton btnDatos = new JButton("Datos Cliente");
@@ -67,7 +73,6 @@ public class ClientDashboardPanel extends JPanel {
         topBar.add(btnCerrar);
         add(topBar, BorderLayout.NORTH);
 
-        // Datos panel
         datosPanel.setBackground(Color.WHITE);
         datosPanel.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(Color.LIGHT_GRAY),
@@ -78,7 +83,6 @@ public class ClientDashboardPanel extends JPanel {
         ));
         cards.add(datosPanel, "DATOS");
 
-        // History panel
         JPanel historyPanel = new JPanel(new BorderLayout());
         historyPanel.setBackground(Color.WHITE);
         historyPanel.setBorder(BorderFactory.createTitledBorder(
@@ -88,10 +92,15 @@ public class ClientDashboardPanel extends JPanel {
                 TitledBorder.TOP,
                 new Font("SansSerif", Font.BOLD, 14)
         ));
+
         String[] cols = {"Fecha", "Total (€)", "Estado Factura"};
         DefaultTableModel model = new DefaultTableModel(cols, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
         };
+
         historyTable = new JTable(model);
         historyTable.setRowHeight(24);
         historyPanel.add(new JScrollPane(historyTable), BorderLayout.CENTER);
@@ -100,19 +109,18 @@ public class ClientDashboardPanel extends JPanel {
         cards.setBorder(new EmptyBorder(10, 10, 10, 10));
         add(cards, BorderLayout.CENTER);
 
-        // Action listeners
         btnDatos.addActionListener(e -> showDatos());
         btnHistorial.addActionListener(e -> showHistorial());
         btnCerrar.addActionListener(e -> onLogout.run());
-
         btnNuevo.addActionListener(e -> {
             try {
                 List<PaymentMethod> methods = paymentMethodService.listAll();
                 NewOrderDialog dialog = new NewOrderDialog(
                         (Frame) SwingUtilities.getWindowAncestor(this),
-                        currentClient.getId(),
+                        currentClient,
                         productService,
                         saleService,
+                        emailService,
                         methods,
                         this::showHistorial
                 );
@@ -125,10 +133,18 @@ public class ClientDashboardPanel extends JPanel {
         });
 
         historyTable.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) {
+            @Override
+            public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2 && historyTable.getSelectedRow() >= 0) {
-                    Sale sale = salesList.get(historyTable.getSelectedRow());
-                    showOrderDetails(sale.getId());
+                    int row = historyTable.getSelectedRow();
+                    Sale summary = salesList.get(row);
+                    try {
+                        Sale full = saleService.getSaleById(summary.getId());
+                        System.out.println("DEBUG: Productos cargados = " + full.getProducts().size());
+                        showOrderDetails(full);
+                    } catch (DAOException ex) {
+                        showOrderDetails(summary);
+                    }
                 }
             }
         });
@@ -143,20 +159,24 @@ public class ClientDashboardPanel extends JPanel {
         gbc.anchor = GridBagConstraints.WEST;
 
         String[][] info = {
-                {"Nombre:",   currentClient.getUserName()},
-                {"Email:",    currentClient.getUserEmail()},
+                {"Nombre:", currentClient.getUserName()},
+                {"Email:", currentClient.getUserEmail()},
                 {"Teléfono:", currentClient.getPhone()},
-                {"Dirección:",currentClient.getAddress()}
+                {"Dirección:", currentClient.getAddress()}
         };
         for (int i = 0; i < info.length; i++) {
-            gbc.gridy = i; gbc.gridx = 0;
-            JLabel key = new JLabel(info[i][0]); key.setFont(new Font("SansSerif", Font.PLAIN, 12));
+            gbc.gridy = i;
+            gbc.gridx = 0;
+            JLabel key = new JLabel(info[i][0]);
+            key.setFont(new Font("SansSerif", Font.PLAIN, 12));
             datosPanel.add(key, gbc);
             gbc.gridx = 1;
-            JLabel val = new JLabel(info[i][1]); val.setFont(new Font("SansSerif", Font.PLAIN, 12));
+            JLabel val = new JLabel(info[i][1]);
+            val.setFont(new Font("SansSerif", Font.PLAIN, 12));
             datosPanel.add(val, gbc);
         }
-        datosPanel.revalidate(); datosPanel.repaint();
+        datosPanel.revalidate();
+        datosPanel.repaint();
         cardLayout.show(cards, "DATOS");
     }
 
@@ -164,17 +184,15 @@ public class ClientDashboardPanel extends JPanel {
         DefaultTableModel model = (DefaultTableModel) historyTable.getModel();
         model.setRowCount(0);
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
         try {
             salesList = saleService.getSalesByClient(currentClient.getId());
             for (Sale sale : salesList) {
                 String estado = "Sin factura";
                 try {
-                    Optional<Invoice> invOpt = invoiceService.getInvoiceByOrderId(sale.getId());
-                    if (invOpt.isPresent()) {
-                        estado = "Facturada";
-                    }
+                    Optional<?> invOpt = invoiceService.getInvoiceByOrderId(sale.getId());
+                    if (invOpt.isPresent()) estado = "Facturada";
                 } catch (DAOException ignored) {
-                    // Si no existe factura o hay un error leve, seguimos con "Sin factura"
                 }
                 model.addRow(new Object[]{
                         sale.getDate().format(fmt),
@@ -187,13 +205,44 @@ public class ClientDashboardPanel extends JPanel {
                     "Error cargando historial: " + ex.getMessage(),
                     "Error", JOptionPane.ERROR_MESSAGE);
         }
+
         cardLayout.show(cards, "HISTORIAL");
     }
 
+    private void showOrderDetails(Sale sale) {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    private void showOrderDetails(int saleId) {
-        JOptionPane.showMessageDialog(this,
-                "Detalles del pedido ID " + saleId,
-                "Detalle Pedido", JOptionPane.INFORMATION_MESSAGE);
+        StringBuilder html = new StringBuilder("<html><body style='font-family:SansSerif;font-size:12px;'>");
+        html.append("<h2>Detalle del Pedido</h2>");
+        html.append(String.format("<p><b>ID Pedido:</b> %d<br>", sale.getId()));
+        html.append(String.format("<b>Fecha:</b> %s<br>", sale.getDate().format(fmt)));
+        html.append(String.format("<b>Total:</b> €%.2f<br>", sale.getTotalPrice()));
+        PaymentMethod pm = sale.getPaymentMethod();
+        html.append(String.format("<b>Método de pago:</b> %s</p>", pm));
+
+        Map<String, Integer> counts = new HashMap<>();
+        for (var p : sale.getProducts()) {
+            counts.put(p.getName(), counts.getOrDefault(p.getName(), 0) + 1);
+        }
+        html.append("<p><b>Productos:</b></p><ul>");
+        if (counts.isEmpty()) {
+            html.append("<li><i>(ninguno)</i></li>");
+        } else {
+            for (var e : counts.entrySet()) {
+                html.append(String.format("<li>%s x%d</li>", e.getKey(), e.getValue()));
+            }
+        }
+        html.append("</ul></body></html>");
+
+        JLabel content = new JLabel(html.toString());
+        JScrollPane scroll = new JScrollPane(content);
+        scroll.setPreferredSize(new Dimension(350, 200));
+
+        JOptionPane.showMessageDialog(
+                this,
+                scroll,
+                "Detalle del Pedido",
+                JOptionPane.INFORMATION_MESSAGE
+        );
     }
 }
