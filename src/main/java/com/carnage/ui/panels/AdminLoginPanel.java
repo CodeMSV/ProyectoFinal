@@ -39,13 +39,16 @@ public class AdminLoginPanel extends JPanel {
         // Title
         JLabel lblTitle = new JLabel("Admin Login", SwingConstants.CENTER);
         lblTitle.setFont(new Font("SansSerif", Font.BOLD, 24));
-        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
         add(lblTitle, gbc);
 
         // Email label
         JLabel lblEmail = new JLabel("Email:");
         lblEmail.setFont(new Font("SansSerif", Font.PLAIN, 16));
-        gbc.gridy = 1; gbc.gridwidth = 1;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
         add(lblEmail, gbc);
 
         // Email field
@@ -57,7 +60,8 @@ public class AdminLoginPanel extends JPanel {
         // Password label
         JLabel lblPassword = new JLabel("Password:");
         lblPassword.setFont(new Font("SansSerif", Font.PLAIN, 16));
-        gbc.gridx = 0; gbc.gridy = 2;
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         add(lblPassword, gbc);
 
         // Password field
@@ -71,12 +75,15 @@ public class AdminLoginPanel extends JPanel {
         btnLogin.setFont(new Font("SansSerif", Font.BOLD, 16));
         btnLogin.setBackground(new Color(0, 120, 215));
         btnLogin.setForeground(Color.BLACK);
-        gbc.gridy = 3; gbc.gridx = 0; gbc.gridwidth = 2;
+        gbc.gridy = 3;
+        gbc.gridx = 0;
+        gbc.gridwidth = 2;
         gbc.insets = new Insets(20, 20, 10, 20);
         add(btnLogin, gbc);
 
         btnLogin.addActionListener(new ActionListener() {
-            @Override public void actionPerformed(ActionEvent e) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
                 try {
                     Admin admin = (Admin) userService.authenticate(
                             txtEmail.getText().trim(),
