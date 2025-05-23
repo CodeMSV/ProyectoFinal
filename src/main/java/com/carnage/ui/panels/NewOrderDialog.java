@@ -1,10 +1,15 @@
+// src/main/java/com/carnage/ui/panels/NewOrderDialog.java
 package com.carnage.ui.panels;
 
 import com.carnage.model.Product;
 import com.carnage.model.Sale;
+import com.carnage.model.user.client.Client;
 import com.carnage.model.user.client.PaymentMethod;
+import com.carnage.service.EmailNotificationService;
 import com.carnage.service.ProductService;
 import com.carnage.service.SaleService;
+import jakarta.mail.MessagingException;
+
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -14,34 +19,42 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class NewOrderDialog extends JDialog {
+
+    private final Client client;
     private final ProductService productService;
     private final SaleService saleService;
-    private final int clientId;
+    private final EmailNotificationService emailService;
     private final Runnable onOrderCreated;
 
     private JTable productsTable;
     private DefaultTableModel tableModel;
-    private JComboBox<PaymentMethod> cbPayment;
-    private JButton btnConfirm, btnCancel;
 
-    // Clase interna para línea de pedido
     private static class Line {
         final Product product;
         final int qty;
-        Line(Product p, int q) { product = p; qty = q; }
+
+        Line(Product p, int q) {
+            product = p;
+            qty = q;
+        }
     }
+
     private final List<Line> lines = new ArrayList<>();
 
-    public NewOrderDialog(Frame owner,
-                          int clientId,
-                          ProductService productService,
-                          SaleService saleService,
-                          List<PaymentMethod> paymentMethods,
-                          Runnable onOrderCreated) {
+    public NewOrderDialog(
+            Frame owner,
+            Client client,
+            ProductService productService,
+            SaleService saleService,
+            EmailNotificationService emailService,
+            List<PaymentMethod> paymentMethods,
+            Runnable onOrderCreated
+    ) {
         super(owner, "Nuevo Pedido", true);
-        this.clientId = clientId;
+        this.client = client;
         this.productService = productService;
         this.saleService = saleService;
+        this.emailService = emailService;
         this.onOrderCreated = onOrderCreated;
 
         initComponents(paymentMethods);
@@ -51,22 +64,28 @@ public class NewOrderDialog extends JDialog {
     }
 
     private void initComponents(List<PaymentMethod> paymentMethods) {
-        setLayout(new BorderLayout(10,10));
+        setLayout(new BorderLayout(10, 10));
 
-        // Definimos columnas con tipos: ID=Integer, Producto=String, Precio=Double, Stock=Integer, Cantidad=Integer
-        String[] cols = {"ID","Producto","Precio","Stock","Cantidad"};
+        String[] cols = {"ID", "Producto", "Precio", "Stock", "Cantidad"};
         tableModel = new DefaultTableModel(cols, 0) {
-            @Override public boolean isCellEditable(int r, int c) {
-                // Sólo la columna 4 (Cantidad) editable
+            @Override
+            public boolean isCellEditable(int r, int c) {
                 return c == 4;
             }
-            @Override public Class<?> getColumnClass(int columnIndex) {
-                switch (columnIndex) {
-                    case 0: return Integer.class;
-                    case 2: return Double.class;
-                    case 3: return Integer.class;
-                    case 4: return Integer.class;
-                    default: return String.class;
+
+            @Override
+            public Class<?> getColumnClass(int col) {
+                switch (col) {
+                    case 0:
+                        return Integer.class;
+                    case 2:
+                        return Double.class;
+                    case 3:
+                        return Integer.class;
+                    case 4:
+                        return Integer.class;
+                    default:
+                        return String.class;
                 }
             }
         };
@@ -74,19 +93,20 @@ public class NewOrderDialog extends JDialog {
         productsTable.setRowHeight(24);
         add(new JScrollPane(productsTable), BorderLayout.CENTER);
 
-        // Panel inferior
-        JPanel south = new JPanel(new FlowLayout(FlowLayout.RIGHT,10,10));
-        cbPayment = new JComboBox<>(paymentMethods.toArray(new PaymentMethod[0]));
+        JPanel south = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+        JComboBox<PaymentMethod> cbPayment = new JComboBox<>(
+                paymentMethods.toArray(new PaymentMethod[0])
+        );
         south.add(new JLabel("Método de pago:"));
         south.add(cbPayment);
-        btnConfirm = new JButton("Confirmar Pedido");
-        btnCancel  = new JButton("Cancelar");
+        JButton btnCancel = new JButton("Cancelar");
+        JButton btnConfirm = new JButton("Confirmar Pedido");
         south.add(btnCancel);
         south.add(btnConfirm);
         add(south, BorderLayout.SOUTH);
 
         btnCancel.addActionListener(e -> dispose());
-        btnConfirm.addActionListener(e -> onConfirm());
+        btnConfirm.addActionListener(e -> onConfirm((PaymentMethod) cbPayment.getSelectedItem()));
     }
 
     private void loadProducts() {
@@ -95,9 +115,9 @@ public class NewOrderDialog extends JDialog {
                 tableModel.addRow(new Object[]{
                         p.getId(),
                         p.getName(),
-                        p.getPrice(),           // doble sin formatear
+                        p.getPrice(),
                         p.getQuantityInStock(),
-                        0                       // cantidad inicial
+                        0
                 });
             }
         } catch (Exception ex) {
@@ -108,19 +128,20 @@ public class NewOrderDialog extends JDialog {
         }
     }
 
-    private void onConfirm() {
+    private void onConfirm(PaymentMethod method) {
         lines.clear();
         double total = 0;
         for (int i = 0; i < tableModel.getRowCount(); i++) {
             int qty = (Integer) tableModel.getValueAt(i, 4);
             if (qty > 0) {
-                int prodId        = (Integer) tableModel.getValueAt(i, 0);
-                String name       = (String)  tableModel.getValueAt(i, 1);
-                double price      = (Double)  tableModel.getValueAt(i, 2);  // recuperamos Double
-                Product p = new Product(name, price, 0, null, null);
-                p.setId(prodId);
+                Product p = new Product(
+                        (String) tableModel.getValueAt(i, 1),
+                        (Double) tableModel.getValueAt(i, 2),
+                        0, null, null
+                );
+                p.setId((Integer) tableModel.getValueAt(i, 0));
                 lines.add(new Line(p, qty));
-                total += price * qty;
+                total += p.getPrice() * qty;
             }
         }
         if (lines.isEmpty()) {
@@ -130,25 +151,32 @@ public class NewOrderDialog extends JDialog {
             return;
         }
 
-        // Construimos la venta
         List<Product> prods = new ArrayList<>();
-        for (Line ln : lines) {
-            for (int c=0; c<ln.qty; c++) prods.add(ln.product);
-        }
+        for (Line ln : lines)
+            for (int c = 0; c < ln.qty; c++)
+                prods.add(ln.product);
+
         Sale sale = new Sale(
-                clientId,
+                client.getId(),
                 prods,
                 total,
                 LocalDate.now(),
-                (PaymentMethod) cbPayment.getSelectedItem()
+                method
         );
 
-        // Persistimos
         try {
             saleService.createSale(sale);
-            JOptionPane.showMessageDialog(this,
-                    "Pedido creado con éxito (ID: " + sale.getId() + ")",
-                    "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            try {
+                emailService.notifyOrder(client.getUserEmail(), total, LocalDate.now());
+                JOptionPane.showMessageDialog(this,
+                        "Pedido creado con éxito (ID: " + sale.getId() + ").\n" +
+                                "Te hemos enviado la confirmación por email.",
+                        "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            } catch (MessagingException me) {
+                JOptionPane.showMessageDialog(this,
+                        "Pedido creado, pero fallo enviando email: " + me.getMessage(),
+                        "Atención", JOptionPane.WARNING_MESSAGE);
+            }
             onOrderCreated.run();
             dispose();
         } catch (Exception ex) {
