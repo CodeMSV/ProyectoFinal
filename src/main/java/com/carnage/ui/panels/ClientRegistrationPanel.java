@@ -9,10 +9,14 @@ import com.carnage.util.dao.DAOException;
 import com.carnage.util.dao.InvalidTextEnterException;
 import jakarta.mail.MessagingException;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
 import java.util.Objects;
@@ -32,7 +36,7 @@ public class ClientRegistrationPanel extends JPanel {
     private JComboBox<PaymentMethod> paymentMethodCombo;
     private JButton registerButton;
     private JButton cancelButton;
-
+    private BufferedImage backgroundImage;
 
     public ClientRegistrationPanel(
             UserService userService,
@@ -44,11 +48,22 @@ public class ClientRegistrationPanel extends JPanel {
         this.userService = Objects.requireNonNull(userService);
         this.emailService = Objects.requireNonNull(emailService);
 
+        try {
+            backgroundImage = ImageIO.read(getClass().getResourceAsStream("/logo.png"));
+        } catch (IOException | IllegalArgumentException e) {
+            System.err.println("No se pudo cargar la imagen de fondo: " + e.getMessage());
+        }
+
         setLayout(new GridBagLayout());
         setBackground(Color.WHITE);
+        setBorder(new EmptyBorder(150, 0, 0, 0));
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(8, 8, 8, 8);
         gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+
         int row = 0;
 
         nameField = new JTextField();
@@ -77,7 +92,7 @@ public class ClientRegistrationPanel extends JPanel {
         gbc.gridy = row;
         gbc.gridwidth = 2;
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
-        btnPanel.setBackground(Color.WHITE);
+        btnPanel.setOpaque(false);
         registerButton = new JButton("Registrar");
         cancelButton = new JButton("Volver al login");
         btnPanel.add(registerButton);
@@ -113,8 +128,8 @@ public class ClientRegistrationPanel extends JPanel {
                 client = userService.registerClient(client);
                 try {
                     emailService.notifyRegistration(client.getUserEmail());
-                } catch (MessagingException mex) {
-                    mex.printStackTrace();
+                } catch (MessagingException ex) {
+                    ex.printStackTrace();
                 }
                 JOptionPane.showMessageDialog(this,
                         "Registro exitoso. ¡Bienvenido, " + fullName + "!",
@@ -141,7 +156,6 @@ public class ClientRegistrationPanel extends JPanel {
         cancelButton.addActionListener(e -> onCancel.run());
     }
 
-
     private void clearFields() {
         nameField.setText("");
         surnameField.setText("");
@@ -159,5 +173,13 @@ public class ClientRegistrationPanel extends JPanel {
         add(new JLabel(label), gbc);
         gbc.gridx = 1;
         add(field, gbc);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (backgroundImage != null) {
+            g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+        }
     }
 }

@@ -6,9 +6,12 @@ import com.carnage.model.user.client.Client;
 import com.carnage.service.UserService;
 import com.carnage.service.EmailNotificationService;
 
-
+import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.BorderFactory;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.Objects;
 
 public class ClientLoginPanel extends JPanel {
@@ -19,7 +22,7 @@ public class ClientLoginPanel extends JPanel {
     private JLabel registerLink;
     private UserService userService;
     private EmailNotificationService emailService;
-
+    private BufferedImage backgroundImage;
 
     public ClientLoginPanel(
             UserService userService,
@@ -32,6 +35,13 @@ public class ClientLoginPanel extends JPanel {
 
         setLayout(new GridBagLayout());
         setBackground(Color.WHITE);
+        setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 100));
+
+        try {
+            backgroundImage = ImageIO.read(getClass().getResourceAsStream("/logo.png"));
+        } catch (IOException | IllegalArgumentException e) {
+            System.err.println("No se pudo cargar la imagen de fondo: " + e.getMessage());
+        }
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
@@ -44,7 +54,6 @@ public class ClientLoginPanel extends JPanel {
         gbc.gridx = 1;
         gbc.gridy = 0;
         emailField = new JTextField();
-        // TODO: add regex validation for email format
         add(emailField, gbc);
 
         gbc.gridx = 0;
@@ -74,7 +83,6 @@ public class ClientLoginPanel extends JPanel {
             try {
                 Client client = (Client) userService.authenticate(email, password);
                 JOptionPane.showMessageDialog(this, "Login successful");
-                // TODO: optionally send a notification email
                 onLoginSuccess.accept(client);
             } catch (EntityNotFoundException ex) {
                 JOptionPane.showMessageDialog(this, "Invalid credentials", "Error", JOptionPane.ERROR_MESSAGE);
@@ -89,5 +97,13 @@ public class ClientLoginPanel extends JPanel {
                 onRegisterClick.run();
             }
         });
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (backgroundImage != null) {
+            g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+        }
     }
 }
