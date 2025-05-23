@@ -10,8 +10,15 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class JdbcInvoiceDAO implements InvoiceDAO {
 
+    /**
+     * Creates a new invoice in the database.
+     *
+     * @param invoice the invoice to create
+     * @throws DAOException if an error occurs while creating the invoice
+     */
     @Override
     public void createInvoice(Invoice invoice) throws DAOException {
         String sql = "INSERT INTO invoice (order_id, invoice_date, invoice_pdf) VALUES (?, ?, ?)";
@@ -26,7 +33,6 @@ public class JdbcInvoiceDAO implements InvoiceDAO {
             if (affected == 0) {
                 throw new DAOException("Creating invoice failed, no rows affected.");
             }
-            // Recuperar el id generado y asignarlo al objeto
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
                     invoice.setId(rs.getInt(1));
@@ -37,6 +43,13 @@ public class JdbcInvoiceDAO implements InvoiceDAO {
         }
     }
 
+
+    /**
+     * Updates an existing invoice in the database.
+     *
+     * @param invoice the invoice to update
+     * @throws DAOException if an error occurs while updating the invoice
+     */
     @Override
     public Invoice findById(int invoiceId) throws DAOException, EntityNotFoundException {
         String sql = "SELECT id, order_id, invoice_date, invoice_pdf FROM invoice WHERE id = ?";
@@ -56,6 +69,13 @@ public class JdbcInvoiceDAO implements InvoiceDAO {
         }
     }
 
+
+    /**
+     * Updates an existing invoice in the database.
+     *
+     * @param invoice the invoice to update
+     * @throws DAOException if an error occurs while updating the invoice
+     */
     @Override
     public Invoice findByOrderId(int orderId) throws DAOException, EntityNotFoundException {
         String sql = "SELECT id, order_id, invoice_date, invoice_pdf FROM invoice WHERE order_id = ?";
@@ -74,6 +94,13 @@ public class JdbcInvoiceDAO implements InvoiceDAO {
         }
     }
 
+
+    /**
+     * Updates an existing invoice in the database.
+     *
+     * @param invoice the invoice to update
+     * @throws DAOException if an error occurs while updating the invoice
+     */
     @Override
     public List<Invoice> findAll() throws DAOException {
         String sql = "SELECT id, order_id, invoice_date, invoice_pdf FROM invoice";
@@ -91,6 +118,13 @@ public class JdbcInvoiceDAO implements InvoiceDAO {
         }
     }
 
+
+    /**
+     * Updates an existing invoice in the database.
+     *
+     * @param invoice the invoice to update
+     * @throws DAOException if an error occurs while updating the invoice
+     */
     @Override
     public List<Invoice> findByClientId(int clientId) throws DAOException {
         String sql =
@@ -115,17 +149,20 @@ public class JdbcInvoiceDAO implements InvoiceDAO {
     }
 
     /**
-     * Mapea la fila actual del ResultSet a un objeto Invoice,
-     * asignando también el id generado.
+     * Updates an existing invoice in the database.
+     *
+     * @param invoice the invoice to update
+     * @throws DAOException if an error occurs while updating the invoice
      */
-    private Invoice mapRowToInvoice(ResultSet rs) throws SQLException {
-        int id       = rs.getInt("id");
-        int orderId  = rs.getInt("order_id");
-        LocalDate date = rs.getDate("invoice_date").toLocalDate();
-        byte[] pdf   = rs.getBytes("invoice_pdf");
+    private Invoice mapRowToInvoice(ResultSet resultSet) throws SQLException {
+        int invoiceId = resultSet.getInt("id");
+        int linkedOrderId = resultSet.getInt("order_id");
+        LocalDate invoiceDate = resultSet.getDate("invoice_date").toLocalDate();
+        byte[] invoicePdfBytes = resultSet.getBytes("invoice_pdf");
 
-        Invoice inv = new Invoice(orderId, date, pdf);
-        inv.setId(id);
-        return inv;
+        Invoice invoice = new Invoice(linkedOrderId, invoiceDate, invoicePdfBytes);
+        invoice.setId(invoiceId);
+        return invoice;
     }
+
 }
