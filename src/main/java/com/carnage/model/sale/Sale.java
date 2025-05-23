@@ -16,7 +16,8 @@ public class Sale {
     private LocalDate date;
     private PaymentMethod paymentMethod;
 
-    public Sale() {}
+    public Sale() {
+    }
 
     public Sale(Integer clientId, List<Product> products, Double totalPrice, LocalDate date, PaymentMethod paymentMethod) {
         this.clientId = clientId;
@@ -42,6 +43,10 @@ public class Sale {
         return this.products;
     }
 
+    public void setProducts(List<Product> products) {  // <— nuevo setter
+        this.products = products;
+    }
+
     public Double getTotalPrice() {
         return this.totalPrice;
     }
@@ -62,10 +67,12 @@ public class Sale {
         Sale sale = (Sale) o;
         return Objects.equals(id, sale.id);
     }
+
     @Override
     public int hashCode() {
         return Objects.hash(id);
     }
+
     @Override
     public String toString() {
         return "Sale{" +

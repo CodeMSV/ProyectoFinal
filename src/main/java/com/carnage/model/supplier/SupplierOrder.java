@@ -15,7 +15,8 @@ public class SupplierOrder {
     private OrderStatus status;
 
 
-    public SupplierOrder() {}
+    public SupplierOrder() {
+    }
 
     public SupplierOrder(List<SupplierOrderItem> items, OrderStatus status) {
         this.items = items;

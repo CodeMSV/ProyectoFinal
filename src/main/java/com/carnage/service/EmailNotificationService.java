@@ -13,27 +13,29 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Properties;
 
-/**
- * Service for sending formal and detailed emails via Gmail SMTP with an App Password.
- */
 public class EmailNotificationService {
 
     private final UserDAO userDAO;
     private final Session mailSession;
 
-    // ─── CONFIGURA AQUÍ TUS CREDENCIALES ─────────────────────────────────────
-    private static final String GMAIL_USER         = "migue.626@gmail.com";
+    private static final String GMAIL_USER = "migue.626@gmail.com";
     private static final String GMAIL_APP_PASSWORD = "brss yken fjiu esjp".replace(" ", "");
-    private static final String FROM_EMAIL         = GMAIL_USER;
-    // ─────────────────────────────────────────────────────────────────────────
+    private static final String FROM_EMAIL = GMAIL_USER;
 
+
+    /**
+     * Constructor for EmailNotificationService.
+     * Initializes the mail session with Gmail SMTP settings.
+     *
+     * @param userDAO The UserDAO instance to interact with user data.
+     */
     public EmailNotificationService(UserDAO userDAO) {
         this.userDAO = userDAO;
         Properties props = new Properties();
-        props.put("mail.smtp.auth",            "true");
+        props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.smtp.host",            "smtp.gmail.com");
-        props.put("mail.smtp.port",            "587");
+        props.put("mail.smtp.host", "smtp.gmail.com");
+        props.put("mail.smtp.port", "587");
 
         this.mailSession = Session.getInstance(props, new Authenticator() {
             @Override
@@ -43,8 +45,14 @@ public class EmailNotificationService {
         });
     }
 
+
     /**
-     * Sends a formal welcome email after client registration.
+     * Sends a welcome email to the user upon registration.
+     *
+     * @param email The email address of the user.
+     * @throws DAOException            If there is an error accessing the database.
+     * @throws EntityNotFoundException If the user is not found in the database.
+     * @throws MessagingException      If there is an error sending the email.
      */
     public void notifyRegistration(String email)
             throws DAOException, EntityNotFoundException, MessagingException {
@@ -66,12 +74,20 @@ public class EmailNotificationService {
                         "Sincerely,%n" +
                         "The Macota Team%n" +
                         "Macota S.L. | Calle Falsa 123, Sevilla, Spain%n" +
-                        "" , name);
+                        "", name);
         sendEmail(email, subject, body);
     }
 
+
     /**
-     * Sends a detailed order confirmation email.
+     * Sends an order confirmation email to the user.
+     *
+     * @param email       The email address of the user.
+     * @param totalAmount The total amount of the order.
+     * @param date        The date of the order.
+     * @throws DAOException            If there is an error accessing the database.
+     * @throws EntityNotFoundException If the user is not found in the database.
+     * @throws MessagingException      If there is an error sending the email.
      */
     public void notifyOrder(String email, double totalAmount, LocalDate date)
             throws DAOException, EntityNotFoundException, MessagingException {
@@ -79,9 +95,9 @@ public class EmailNotificationService {
         if (!(user instanceof Client)) {
             throw new EntityNotFoundException("User is not a client: " + email);
         }
-        String name          = ((Client) user).getUserName();
+        String name = ((Client) user).getUserName();
         String formattedDate = date.format(DateTimeFormatter.ofPattern("dd MMMM yyyy"));
-        String subject       = "Your Macota Order Confirmation";
+        String subject = "Your Macota Order Confirmation";
         String body = String.format(
                 "Hello %s,%n%n" +
                         "Thank you for your recent order with Macota. We appreciate your trust in us. Below are the details of your purchase:%n%n" +
@@ -97,8 +113,14 @@ public class EmailNotificationService {
         sendEmail(email, subject, body);
     }
 
+
     /**
-     * Internal helper to dispatch the SMTP message.
+     * Sends a password reset email to the user.
+     *
+     * @param email The email address of the user.
+     * @throws DAOException            If there is an error accessing the database.
+     * @throws EntityNotFoundException If the user is not found in the database.
+     * @throws MessagingException      If there is an error sending the email.
      */
     private void sendEmail(String to, String subject, String body) throws MessagingException {
         MimeMessage msg = new MimeMessage(mailSession);

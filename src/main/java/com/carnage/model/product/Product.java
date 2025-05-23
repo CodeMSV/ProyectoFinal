@@ -14,7 +14,8 @@ public class Product {
     private ProductCategory category;
     private LocalDate expirationDate;
 
-    public Product() {}
+    public Product() {
+    }
 
     public Product(String name, Double price, int quantityInStock, ProductCategory category, LocalDate expirationDate) {
         this.name = name;
@@ -27,6 +28,7 @@ public class Product {
     public Integer getId() {
         return this.id;
     }
+
     public void setId(Integer id) {
         this.id = id;
     }
@@ -34,15 +36,19 @@ public class Product {
     public String getName() {
         return this.name;
     }
+
     public Double getPrice() {
         return this.price;
     }
+
     public int getQuantityInStock() {
         return this.quantityInStock;
     }
+
     public ProductCategory getCategory() {
         return this.category;
     }
+
     public LocalDate getExpirationDate() {
         return this.expirationDate;
     }
@@ -55,10 +61,12 @@ public class Product {
         Product product = (Product) o;
         return Objects.equals(id, product.id);
     }
+
     @Override
     public int hashCode() {
         return Objects.hash(id);
     }
+
     @Override
     public String toString() {
         return "Product{" + id + ", " + name + '}';

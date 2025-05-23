@@ -10,4 +10,6 @@ public class Admin extends User {
     public Admin(String userName, String userEmail, String userPassword) {
         super(userName, userEmail, userPassword);
     }
+
+
 }

@@ -9,7 +9,8 @@ public class Invoice {
     private LocalDate invoiceDate;
     private byte[] invoicePdf;
 
-    public Invoice() {}
+    public Invoice() {
+    }
 
     public Invoice(Integer saleId, LocalDate invoiceDate, byte[] invoicePdf) {
         this.saleId = saleId;
@@ -17,21 +18,22 @@ public class Invoice {
         this.invoicePdf = invoicePdf;
     }
 
-    // getter/setter de id
     public Integer getId() {
         return this.id;
     }
+
     public void setId(Integer id) {
         this.id = id;
     }
 
-    // resto de getters
     public Integer getSaleId() {
         return this.saleId;
     }
+
     public LocalDate getInvoiceDate() {
         return this.invoiceDate;
     }
+
     public byte[] getInvoicePdf() {
         return this.invoicePdf;
     }

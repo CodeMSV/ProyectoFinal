@@ -6,8 +6,6 @@ public class PasswordValidator {
 
     private static final String COMPLEXITY_REGEX = "^(?=.*[A-Za-z])(?=.*\\d).+$";
 
-    private PasswordValidator() { /* util class */ }
-
     /**
      * Validates the given password.
      *

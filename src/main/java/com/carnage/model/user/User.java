@@ -9,7 +9,8 @@ public abstract class User {
     protected String userEmail;
     protected String userPassword;
 
-    public User() {}
+    public User() {
+    }
 
     public User(String userName, String userEmail, String userPassword) {
         this.userName = userName;
@@ -20,6 +21,7 @@ public abstract class User {
     public Integer getId() {
         return this.id;
     }
+
     public void setId(Integer id) {
         this.id = id;
     }

@@ -7,7 +7,8 @@ public class Client extends User {
     private String address;
     private String phone;
 
-    public Client() {}
+    public Client() {
+    }
 
     public Client(String userName, String userEmail, String userPassword, String address, String phone) {
         super(userName, userEmail, userPassword);
@@ -18,6 +19,7 @@ public class Client extends User {
     public String getAddress() {
         return this.address;
     }
+
     public String getPhone() {
         return this.phone;
     }
