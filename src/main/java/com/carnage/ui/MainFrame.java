@@ -43,9 +43,6 @@ public class MainFrame extends JFrame {
     private final InvoiceService invoiceService;
     private final SupplierOrderService supplierOrderService;
 
-    /**
-     * Constructor con inyección de servicios.
-     */
     public MainFrame(
             UserService userService,
             EmailNotificationService emailService,
@@ -58,7 +55,6 @@ public class MainFrame extends JFrame {
         this.userService = userService;
         this.emailService = emailService;
         this.paymentMethodService = paymentMethodService;
-        // ProductService requiere un ProductDAO con ConnectionDDBB
         this.productService = new ProductService(new JdbcProductDAO(new ConnectionDDBB()));
         this.saleService = saleService;
         this.invoiceService = invoiceService;
@@ -73,7 +69,6 @@ public class MainFrame extends JFrame {
         contentPanel = new JPanel(cardLayout);
         setContentPane(contentPanel);
 
-        // Inicializar panels
         try {
             initPanels();
         } catch (DAOException ex) {
@@ -84,13 +79,11 @@ public class MainFrame extends JFrame {
     }
 
     private void initPanels() throws DAOException {
-        // Home
         contentPanel.add(new HomePanel(
                 () -> showPanel("ClientLogin"),
                 () -> showPanel("AdminLogin")
         ), "Home");
 
-        // Cliente - Login
         contentPanel.add(new ClientLoginPanel(
                 userService,
                 emailService,
@@ -98,7 +91,6 @@ public class MainFrame extends JFrame {
                 this::onClientLoginSuccess
         ), "ClientLogin");
 
-        // Cliente - Registro
         List<PaymentMethod> methods;
         try {
             methods = paymentMethodService.listAll();
@@ -116,19 +108,20 @@ public class MainFrame extends JFrame {
                 () -> showPanel("ClientLogin")
         ), "ClientRegistration");
 
-        // Admin - Login
         contentPanel.add(new AdminLoginPanel(
                 userService,
                 this::onAdminLoginSuccess
         ), "AdminLogin");
 
-        // Admin - Dashboard
         contentPanel.add(new AdminDashboardPanel(
+                userService,
+                saleService,
+                productService,
                 supplierOrderService,
                 () -> showPanel("Home")
         ), "AdminDashboard");
 
-        // Mostramos Home
+        // Show home
         showPanel("Home");
     }
 
@@ -139,6 +132,7 @@ public class MainFrame extends JFrame {
                 saleService,
                 invoiceService,
                 paymentMethodService,
+                emailService,             // ← Asegúrate de incluirlo
                 () -> showPanel("Home")
         );
         contentPanel.add(dashboard, "ClientDashboard");
@@ -155,10 +149,6 @@ public class MainFrame extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            // En Test se usa esta firma
-            try {
-                // Ejemplo: se inyectan servicios aquí
-            } catch (Exception ignored) {}
         });
     }
 }
